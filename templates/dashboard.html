@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strava Dashboard</title>
+    <style>
+        {% raw %}
+        :root {
+            --bg: #f4f1ea;
+            --panel-strong: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #e85d04;
+            --accent-dark: #c2410c;
+            --border: rgba(31, 41, 55, 0.08);
+            --shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(232, 93, 4, 0.16), transparent 28%),
+                radial-gradient(circle at right center, rgba(14, 116, 144, 0.14), transparent 24%),
+                linear-gradient(180deg, #fcfaf6 0%, var(--bg) 100%);
+            min-height: 100vh;
+            padding: 32px 20px 48px;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 28px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: rgba(255, 253, 248, 0.92);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(6px);
+        }
+
+        .title-block h1 {
+            font-size: clamp(2.2rem, 3vw, 3.4rem);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .title-block p {
+            color: var(--muted);
+            max-width: 640px;
+            font-size: 1rem;
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            color: white;
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            box-shadow: 0 10px 24px rgba(194, 65, 12, 0.24);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card,
+        .chart-card,
+        .table-card {
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card {
+            padding: 22px;
+        }
+
+        .stat-card h3 {
+            color: var(--muted);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .unit {
+            color: var(--muted);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            padding: 18px;
+            overflow: hidden;
+        }
+
+        .chart-card-full {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card-tall {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card .plotly-graph-div {
+            border-radius: 18px;
+        }
+
+        .chart-caption {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .session-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .session-toolbar label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .session-select {
+            min-width: min(100%, 520px);
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            font: inherit;
+        }
+
+        .session-chart {
+            display: none;
+        }
+
+        .session-chart.is-active {
+            display: block;
+        }
+
+        .table-card {
+            padding: 24px;
+        }
+
+        .table-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 14px 40px;
+            }
+
+            .header {
+                flex-direction: column;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                padding: 14px 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            td {
+                border: none;
+                padding: 6px 0;
+            }
+        }
+        {% endraw %}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-block">
+                <h1>Strava Dashboard</h1>
+                <p>Vue synthétique de tes dernières séances, recentrée sur le volume hebdomadaire, les zones par séance et la dynamique de charge.</p>
+            </div>
+            <div class="header-actions">
+                <a class="logout-btn" href="/coach">Coach IA</a>
+                <a class="logout-btn" href="/logout">Déconnexion</a>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Distance totale</h3>
+                <div class="value">{{ "%.1f"|format(total_distance) }}</div>
+                <div class="unit">km</div>
+            </div>
+            <div class="stat-card">
+                <h3>Temps total</h3>
+                <div class="value">{{ "%.1f"|format(total_duration) }}</div>
+                <div class="unit">minutes</div>
+            </div>
+            <div class="stat-card">
+                <h3>Activités</h3>
+                <div class="value">{{ activities|length }}</div>
+                <div class="unit">sur la période chargée</div>
+            </div>
+            <div class="stat-card">
+                <h3>Allure moyenne</h3>
+                <div class="value">{{ average_pace }}</div>
+                <div class="unit">minutes / km</div>
+            </div>
+            <div class="stat-card">
+                <h3>BPM moyen</h3>
+                <div class="value">{{ average_hr }}</div>
+                <div class="unit">bpm observé</div>
+            </div>
+            <div class="stat-card">
+                <h3>Charge</h3>
+                <div class="value">{{ current_fitness }}</div>
+                <div class="unit">CTL long terme</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card chart-card-full">
+                {{ graph_weekly_volume|safe }}
+                <p class="chart-caption">Le volume hebdomadaire combine les kilomètres parcourus et le dénivelé positif cumulé pour mieux lire la charge terrain.</p>
+            </div>
+            <div class="chart-card chart-card-full">
+                <div class="session-toolbar">
+                    <label for="session-zone-select">Séance</label>
+                    <select id="session-zone-select" class="session-select">
+                        {% for session in session_zone_charts %}
+                        <option value="{{ session.id }}">{{ session.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if session_zone_charts %}
+                    {% for session in session_zone_charts %}
+                    <div class="session-chart {% if loop.first %}is-active{% endif %}" data-session-chart="{{ session.id }}">
+                        {{ session.chart_html|safe }}
+                    </div>
+                    {% endfor %}
+                    <p class="chart-caption">La répartition est estimée à partir de la fréquence cardiaque moyenne et maximale de la séance sélectionnée.</p>
+                {% else %}
+                    <p class="chart-caption">Aucune séance avec données cardiaques disponibles.</p>
+                {% endif %}
+            </div>
+            <div class="chart-card chart-card-tall">
+                {{ graph_load_fatigue|safe }}
+                <p class="chart-caption">Le panneau est agrandi pour mieux suivre la dynamique entre charge quotidienne, fatigue court terme, charge chronique et forme.</p>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h2>Dernières activités</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                        <th>Distance</th>
+                        <th>D+</th>
+                        <th>Durée</th>
+                        <th>Allure</th>
+                        <th>BPM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.name }}</td>
+                        <td>{{ activity.type }}</td>
+                        <td>{{ activity.date }}</td>
+                        <td>{{ activity.distance_km }} km</td>
+                        <td>{{ activity.elevation_gain }} m</td>
+                        <td>{{ activity.duration_min }} min</td>
+                        <td>{{ activity.pace }}</td>
+                        <td>{{ activity.avg_hr }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const select = document.getElementById("session-zone-select");
+            if (!select) return;
+
+            const charts = Array.from(document.querySelectorAll("[data-session-chart]"));
+            const render = (id) => {
+                charts.forEach((chart) => {
+                    chart.classList.toggle("is-active", chart.dataset.sessionChart === id);
+                });
+            };
+
+            render(select.value);
+            select.addEventListener("change", (event) => render(event.target.value));
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach IA</title>
+    <style>
+        {% raw %}
+        :root {
+            --bg: #f4f1ea;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #e85d04;
+            --accent-dark: #c2410c;
+            --border: rgba(31, 41, 55, 0.08);
+            --shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+            --bot: #fff7ed;
+            --user: #eff6ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(232, 93, 4, 0.16), transparent 28%),
+                radial-gradient(circle at right center, rgba(14, 116, 144, 0.14), transparent 24%),
+                linear-gradient(180deg, #fcfaf6 0%, var(--bg) 100%);
+            min-height: 100vh;
+            padding: 32px 20px 40px;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar {
+            padding: 24px;
+            align-self: start;
+            position: sticky;
+            top: 24px;
+        }
+
+        .sidebar h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .sidebar p {
+            color: var(--muted);
+            line-height: 1.55;
+            margin-bottom: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 42px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        }
+
+        .summary {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #fffaf2;
+            border: 1px solid var(--border);
+        }
+
+        .summary-card .label {
+            color: var(--muted);
+            font-size: 0.84rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .summary-card .value {
+            font-size: 1.35rem;
+        }
+
+        .chat-shell {
+            padding: 22px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-height: calc(100vh - 64px);
+        }
+
+        .chat-head {
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-head h2 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .chat-head p {
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .messages {
+            padding: 20px 0;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 480px;
+        }
+
+        .message {
+            max-width: 78%;
+            padding: 16px 18px;
+            border-radius: 20px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border: 1px solid var(--border);
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--user);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: var(--bot);
+        }
+
+        .composer {
+            display: grid;
+            gap: 12px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .composer textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            font: inherit;
+            background: #fffdfa;
+            color: var(--text);
+        }
+
+        .composer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .send-btn {
+            border: none;
+            min-height: 46px;
+            padding: 0 20px;
+            border-radius: 999px;
+            color: white;
+            cursor: pointer;
+            font: inherit;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            box-shadow: 0 10px 24px rgba(194, 65, 12, 0.24);
+        }
+
+        .send-btn:disabled {
+            cursor: wait;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 980px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .chat-shell {
+                min-height: auto;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+        }
+        {% endraw %}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="panel sidebar">
+            <h1>Coach IA</h1>
+            <p>Un espace dédié pour poser des questions sur ta charge, tes séances, ta progression ou la structure de tes prochaines semaines.</p>
+            <div class="nav-links">
+                <a class="nav-link" href="/dashboard">Retour dashboard</a>
+                <a class="nav-link" href="/logout">Déconnexion</a>
+            </div>
+            <div class="summary">
+                <div class="summary-card">
+                    <div class="label">Distance totale</div>
+                    <div class="value">{{ summary.total_distance_km or 0 }} km</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Temps total</div>
+                    <div class="value">{{ summary.total_duration_min or 0 }} min</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Allure moyenne</div>
+                    <div class="value">{{ summary.average_pace or "-" }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">BPM moyen</div>
+                    <div class="value">{{ summary.average_hr or "-" }}</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="panel chat-shell">
+            <div class="chat-head">
+                <h2>Chat entraînement</h2>
+                <p>Le coach reçoit automatiquement le contexte de tes activités récentes pour te conseiller de manière plus utile. Tu peux lui demander une semaine type, l’analyse de ta charge, une adaptation avant course, ou un avis sur une séance.</p>
+            </div>
+
+            <div id="messages" class="messages">
+                <div class="message assistant">Je suis prêt. Demande-moi par exemple : "Que penses-tu de ma charge actuelle ?" ou "Prépare-moi 7 jours d'entraînement pour progresser sans trop fatiguer".</div>
+            </div>
+
+            <form id="chat-form" class="composer">
+                <textarea id="chat-input" placeholder="Exemple : j'ai une course dans 3 semaines, adapte-moi les 10 prochains jours en fonction de ma charge actuelle."></textarea>
+                <div class="composer-row">
+                    <div class="hint">Réponse basée sur tes données récentes Strava et le contexte calculé côté serveur.</div>
+                    <button id="send-btn" class="send-btn" type="submit">Envoyer</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById("chat-form");
+        const input = document.getElementById("chat-input");
+        const messages = document.getElementById("messages");
+        const sendBtn = document.getElementById("send-btn");
+        const history = [];
+
+        function appendMessage(role, content) {
+            const div = document.createElement("div");
+            div.className = `message ${role}`;
+            div.textContent = content;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = input.value.trim();
+            if (!message) return;
+
+            appendMessage("user", message);
+            history.push({ role: "user", content: message });
+            input.value = "";
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch("/api/coach/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message,
+                        history: history.slice(0, -1),
+                    }),
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(typeof data.detail === "string" ? data.detail : "Erreur Gemini");
+                }
+
+                appendMessage("assistant", data.reply);
+                history.push({ role: "assistant", content: data.reply });
+            } catch (error) {
+                appendMessage("assistant", `Je n'ai pas pu répondre pour le moment : ${error.message}`);
+            } finally {
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        });
+    </script>
+</body>
+</html>

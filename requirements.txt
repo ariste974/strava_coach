@@ -1,0 +1,8 @@
+fastapi
+jinja2
+pandas
+plotly
+psycopg[binary]
+python-dotenv
+requests
+uvicorn
