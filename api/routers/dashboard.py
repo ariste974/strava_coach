@@ -23,4 +23,4 @@ def dashboard(request: Request):
     activities = fetch_activities(access_token=access_token, per_page=20)
     context = build_dashboard_context(activities)
     context["request"] = request
-    return templates.TemplateResponse("dashboard.html", context)
+    return templates.TemplateResponse(request=request, name="dashboard.html", context=context)

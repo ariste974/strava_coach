@@ -47,7 +47,7 @@ def coach_page(request: Request):
         "request": request,
         "summary": snapshot["athlete_context"],
     }
-    return templates.TemplateResponse("coach.html", context)
+    return templates.TemplateResponse(request=request, name="coach.html", context=context)
 
 
 @router.post("/api/coach/chat")
