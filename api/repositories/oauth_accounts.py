@@ -36,6 +36,21 @@ def get_primary_access_token(db: Connection, provider: str = "strava") -> str | 
     return row["access_token"] if row else None
 
 
+def get_primary_oauth_account(db: Connection, provider: str = "strava") -> DictRow | None:
+    with db.cursor() as cur:
+        cur.execute(
+            """
+            SELECT *
+            FROM oauth_accounts
+            WHERE provider = %s
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+            """,
+            (provider,),
+        )
+        return cur.fetchone()
+
+
 def save_strava_tokens(db: Connection, tokens: dict) -> None:
     user_id = str(uuid.uuid4())
     oauth_id = str(uuid.uuid4())

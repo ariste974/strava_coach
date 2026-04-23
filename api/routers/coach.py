@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from api.config import TEMPLATES_DIR, require_env
 from api.db import get_db
-from api.repositories.oauth_accounts import get_primary_access_token
+from api.services.auth_tokens import get_valid_access_token
 from api.services.coach import build_coach_system_prompt, build_training_snapshot
 from api.services.gemini import generate_coaching_response
 from api.services.strava import fetch_activities
@@ -26,7 +26,7 @@ class CoachChatRequest(BaseModel):
 
 def _load_training_snapshot() -> dict:
     with get_db() as db:
-        access_token = get_primary_access_token(db)
+        access_token = get_valid_access_token(db)
 
     if not access_token:
         return {}
