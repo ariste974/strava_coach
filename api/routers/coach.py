@@ -61,7 +61,7 @@ def coach_page(request: Request):
 
 
 @router.post("/api/coach/chat")
-def coach_chat(request: Request, payload: CoachChatRequest):
+def coach_chat(payload: CoachChatRequest, request: Request):
     require_env("GEMINI_API_KEY")
 
     # Get athlete_id from session cookie to identify current user

@@ -92,6 +92,7 @@ def save_strava_tokens(db: Connection, tokens: dict) -> None:
                 tokens.get("scope"),
             ),
         )
+    db.commit()
 
 
 def update_strava_tokens(db: Connection, athlete_id: str, tokens: dict) -> None:
@@ -111,3 +112,4 @@ def update_strava_tokens(db: Connection, athlete_id: str, tokens: dict) -> None:
                 "strava",
             ),
         )
+    db.commit()
