@@ -26,6 +26,8 @@ from api.services.strava import (
 
 router = APIRouter()
 
+ATHLETE_COOKIE_NAME = "athlete_id"
+
 
 @router.get("/")
 def home() -> RedirectResponse:
@@ -86,6 +88,15 @@ def callback(
 
     response = RedirectResponse(url="/dashboard")
     response.delete_cookie(STATE_COOKIE_NAME)
+    # Store athlete_id in a secure session cookie to identify the current user
+    response.set_cookie(
+        key=ATHLETE_COOKIE_NAME,
+        value=athlete_id,
+        max_age=86400 * 30,  # 30 days
+        httponly=True,
+        samesite="lax",
+        secure=False,
+    )
     return response
 
 
@@ -106,4 +117,5 @@ def refresh_access_token(refresh_token: str) -> dict:
 def logout() -> RedirectResponse:
     response = RedirectResponse(url="/login")
     response.delete_cookie(STATE_COOKIE_NAME)
+    response.delete_cookie(ATHLETE_COOKIE_NAME)
     return response

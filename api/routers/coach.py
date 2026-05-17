@@ -13,6 +13,8 @@ from api.services.strava import fetch_activities
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
+ATHLETE_COOKIE_NAME = "athlete_id"
+
 
 class ChatMessage(BaseModel):
     role: str = Field(pattern="^(user|assistant)$")
@@ -24,9 +26,12 @@ class CoachChatRequest(BaseModel):
     history: list[ChatMessage] = Field(default_factory=list)
 
 
-def _load_training_snapshot() -> dict:
+def _load_training_snapshot(athlete_id: str | None = None) -> dict:
+    if not athlete_id:
+        return {}
+
     with get_db() as db:
-        access_token = get_valid_access_token(db)
+        access_token = get_valid_access_token(db, athlete_id=athlete_id)
 
     if not access_token:
         return {}
@@ -39,7 +44,12 @@ def _load_training_snapshot() -> dict:
 def coach_page(request: Request):
     require_env("GEMINI_API_KEY")
 
-    snapshot = _load_training_snapshot()
+    # Get athlete_id from session cookie to identify current user
+    athlete_id = request.cookies.get(ATHLETE_COOKIE_NAME)
+    if not athlete_id:
+        return RedirectResponse(url="/login")
+
+    snapshot = _load_training_snapshot(athlete_id=athlete_id)
     if not snapshot:
         return RedirectResponse(url="/login")
 
@@ -51,10 +61,15 @@ def coach_page(request: Request):
 
 
 @router.post("/api/coach/chat")
-def coach_chat(payload: CoachChatRequest):
+def coach_chat(request: Request, payload: CoachChatRequest):
     require_env("GEMINI_API_KEY")
 
-    snapshot = _load_training_snapshot()
+    # Get athlete_id from session cookie to identify current user
+    athlete_id = request.cookies.get(ATHLETE_COOKIE_NAME)
+    if not athlete_id:
+        return JSONResponse(status_code=401, content={"detail": "Utilisateur non connecte"})
+
+    snapshot = _load_training_snapshot(athlete_id=athlete_id)
     if not snapshot:
         return JSONResponse(status_code=401, content={"detail": "Utilisateur non connecte"})
 

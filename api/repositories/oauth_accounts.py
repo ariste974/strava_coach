@@ -51,6 +51,15 @@ def get_primary_oauth_account(db: Connection, provider: str = "strava") -> DictR
         return cur.fetchone()
 
 
+def get_oauth_account_by_athlete_id(
+    db: Connection,
+    athlete_id: str,
+    provider: str = "strava",
+) -> DictRow | None:
+    """Get OAuth account for a specific athlete ID (user-specific)"""
+    return find_oauth_account(db, athlete_id, provider)
+
+
 def save_strava_tokens(db: Connection, tokens: dict) -> None:
     user_id = str(uuid.uuid4())
     oauth_id = str(uuid.uuid4())
